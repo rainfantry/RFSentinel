@@ -35,6 +35,7 @@ import org.maplibre.android.style.layers.Layer
 import org.maplibre.android.style.layers.LayoutPropertyValue
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PaintPropertyValue
+import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.PropertyValue
 import org.maplibre.android.style.layers.RasterLayer
@@ -419,6 +420,11 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
     override fun setSatellite(enabled: Boolean) {
         satelliteOn = enabled
         val style = style() ?: return
+        // Hide/show base map layers so satellite is visible underneath road labels
+        style.getLayer("background")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
+        style.getLayer("water")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
+        style.getLayer("landuse")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
+        style.getLayer("landcover")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
         if (enabled) {
             if (style.getSource(SIXMAPS_SOURCE) == null) {
                 val tileSet = TileSet("tileset", SIXMAPS_TILES)
@@ -428,6 +434,7 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
             }
             if (style.getLayer(SIXMAPS_LAYER) == null) {
                 val layer = RasterLayer(SIXMAPS_LAYER, SIXMAPS_SOURCE)
+                // Add at bottom - background is now hidden
                 style.addLayerAt(layer, 0)
             }
         } else {
