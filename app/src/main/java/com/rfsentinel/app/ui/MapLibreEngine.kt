@@ -7,6 +7,7 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import com.rfsentinel.app.util.Permissions
 import org.json.JSONArray
 import org.json.JSONObject
@@ -419,8 +420,12 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
     private var satelliteOn = false
 
     override fun setSatellite(enabled: Boolean) {
+        Log.d("SixMaps", "setSatellite called: enabled=$enabled")
         satelliteOn = enabled
-        val style = style() ?: return
+        val style = style() ?: run {
+            Log.e("SixMaps", "style() is null, cannot toggle satellite")
+            return
+        }
         // Hide all fill/background layers to reveal satellite underneath road labels
         val vis = if (enabled) Property.NONE else Property.VISIBLE
         for (layer in style.layers) {
@@ -433,17 +438,21 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
                 }
             }
         }
+        Log.d("SixMaps", "Total layers in style: ${style.layers.size}")
         if (enabled) {
             if (style.getSource(SIXMAPS_SOURCE) == null) {
+                Log.d("SixMaps", "Adding Six Maps source: $SIXMAPS_TILES")
                 val tileSet = TileSet("tileset", SIXMAPS_TILES)
                 tileSet.setMinZoom(0f)
                 tileSet.setMaxZoom(21f)
                 style.addSource(RasterSource(SIXMAPS_SOURCE, tileSet, 256))
             }
             if (style.getLayer(SIXMAPS_LAYER) == null) {
+                Log.d("SixMaps", "Adding Six Maps layer at position 0")
                 val layer = RasterLayer(SIXMAPS_LAYER, SIXMAPS_SOURCE)
                 style.addLayerAt(layer, 0)
             }
+            Log.d("SixMaps", "Satellite mode ENABLED")
         } else {
             style.getLayer(SIXMAPS_LAYER)?.let { style.removeLayer(it) }
             style.getSource(SIXMAPS_SOURCE)?.let { style.removeSource(it) }
