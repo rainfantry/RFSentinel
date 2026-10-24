@@ -38,10 +38,7 @@ import org.maplibre.android.style.layers.PaintPropertyValue
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.PropertyValue
 import org.maplibre.android.style.layers.SymbolLayer
-import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.sources.RasterSource
-import org.maplibre.android.style.sources.TileSet
 
 /** [MapEngine] on MapLibre with OpenFreeMap's vector maps (free, no account, no key), or Six Maps NSW LPI aerial imagery. */
 internal class MapLibreEngine(private val context: Context, override val provider: MapEngine.Provider = MapEngine.Provider.OPENFREEMAP) : MapEngine {
@@ -53,10 +50,9 @@ internal class MapLibreEngine(private val context: Context, override val provide
         const val DARK_STYLE = "https://tiles.openfreemap.org/styles/fiord"
         const val CREDIT = "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors"
         const val SIX_MAPS_CREDIT = "© NSW Spatial Services · Six Maps LPI Imagery"
-        // ArcGIS tile scheme uses {z}/{y}/{x} (row before col); MapLibre substitutes correctly.
-        private const val SIXMAPS_TILES = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}"
-        private const val SIXMAPS_SOURCE = "sixmaps-nsw"
-        private const val SIXMAPS_LAYER = "sixmaps-satellite"
+        // Pure raster style for Six Maps — no vector background to block the aerial tiles.
+        // ArcGIS tile scheme: {z}/{y}/{x} (row before col); MapLibre substitutes correctly.
+        private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"© NSW Spatial Services"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
         private const val BUILDINGS = "rf-buildings-3d"
         /** A clear picture, for the puck layers that must show nothing. */
         private const val BLANK = "rf-puck-blank"
@@ -133,20 +129,17 @@ internal class MapLibreEngine(private val context: Context, override val provide
 
     override fun setStyle(dark: Boolean, loaded: (Boolean) -> Unit) {
         val m = map ?: return
+        if (provider == MapEngine.Provider.SIX_MAPS) {
+            m.setStyle(Style.Builder().fromJson(SIX_MAPS_STYLE)) { style ->
+                addMarkerImage(style)
+                loaded(true)
+            }
+            return
+        }
         m.setStyle(Style.Builder().fromUri(if (dark) DARK_STYLE else LIGHT_STYLE)) { style ->
             if (dark) runCatching { nightTweaks(style) }
-            if (provider == MapEngine.Provider.SIX_MAPS) addSixMapsOverlay(style)
             addMarkerImage(style)
             loaded(true)
-        }
-    }
-
-    private fun addSixMapsOverlay(style: Style) {
-        if (style.getSource(SIXMAPS_SOURCE) == null) {
-            style.addSource(RasterSource(SIXMAPS_SOURCE, TileSet("tileset", SIXMAPS_TILES), 256))
-        }
-        if (style.getLayer(SIXMAPS_LAYER) == null) {
-            style.addLayerAt(RasterLayer(SIXMAPS_LAYER, SIXMAPS_SOURCE), 0)
         }
     }
 
