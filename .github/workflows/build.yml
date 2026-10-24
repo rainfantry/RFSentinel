@@ -27,7 +27,9 @@ jobs:
       - name: Build FOSS debug APK
         env:
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: ./gradlew assembleFossDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleFossDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
