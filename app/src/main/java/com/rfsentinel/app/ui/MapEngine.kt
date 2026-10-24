@@ -115,6 +115,12 @@ internal interface MapEngine {
     /** The room the logo and info button take, in dp (width from the edge, height); none for a provider without them. */
     val brandingDp: Pair<Float, Float> get() = 0f to 0f
 
+    // ---- satellite imagery ----
+    /** Turns the Six Maps NSW satellite layer on or off. */
+    fun setSatellite(enabled: Boolean) {}
+    /** Whether the satellite layer is currently on. */
+    val satelliteEnabled: Boolean get() = false
+
     companion object {
         /** Mapbox needs the full build (the FOSS build leaves its SDK out) and a token in local.properties. */
         val mapboxAvailable get() = MapboxSupport.INCLUDED && BuildConfig.MAPBOX_TOKEN.isNotEmpty()

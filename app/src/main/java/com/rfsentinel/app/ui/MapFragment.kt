@@ -549,6 +549,12 @@ class MapFragment : Fragment() {
                 com.rfsentinel.app.settings.SettingsActivity.SECTION_MAP))
     }
 
+    private fun toggleSatellite() {
+        val engine = rfMap?.engine ?: return
+        engine.setSatellite(!engine.satelliteEnabled)
+        act.invalidateOptionsMenu()
+    }
+
     private fun styleThemeButton() {
         val dark = darkTiles()
         binding.themeButton.setImageResource(if (dark) com.rfsentinel.app.R.drawable.ic_light_mode else com.rfsentinel.app.R.drawable.ic_dark_mode)
@@ -1571,10 +1577,14 @@ class MapFragment : Fragment() {
             menu.add(0, 2, 1, "Rename")
             menu.add(0, 3, 2, "Delete")
         } else {
-            menu.add(0, 13, 1, "Check Waze now")
-            menu.add(0, 14, 2, "Waze status")
+            menu.add(0, 15, 0, if (rfMap?.engine?.satelliteEnabled == true) "Hide satellite" else "Six Maps satellite").apply {
+                setIcon(com.rfsentinel.app.R.drawable.ic_map)
+                setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            }
+            menu.add(0, 13, 2, "Check Waze now")
+            menu.add(0, 14, 3, "Waze status")
             // The map's options live in Settings > Map.
-            menu.add(0, 12, 0, "Map settings").apply {
+            menu.add(0, 12, 1, "Map settings").apply {
                 setIcon(com.rfsentinel.app.R.drawable.ic_settings)
                 setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
             }
@@ -1590,6 +1600,7 @@ class MapFragment : Fragment() {
             12 -> { openMapSettings(); true }
             13 -> { WazeUi.checkNow(act); true }
             14 -> { WazeUi.openStatus(act); true }
+            15 -> { toggleSatellite(); true }
             else -> false
         }
     }
