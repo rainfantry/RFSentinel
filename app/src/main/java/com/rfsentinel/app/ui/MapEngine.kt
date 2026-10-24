@@ -20,7 +20,8 @@ internal interface MapEngine {
 
     enum class Provider(val key: String, val label: String) {
         OPENFREEMAP("openfreemap", "OpenFreeMap (OpenStreetMap, free, no account)"),
-        MAPBOX("mapbox", "Mapbox");
+        MAPBOX("mapbox", "Mapbox"),
+        SIX_MAPS("sixmaps", "Six Maps NSW LPI (Aerial, Australia)");
 
         companion object {
             fun parse(key: String?) = entries.firstOrNull { it.key == key } ?: OPENFREEMAP
@@ -131,6 +132,7 @@ internal interface MapEngine {
         fun create(context: Context, provider: Provider = chosen(context)): MapEngine = when (provider) {
             Provider.MAPBOX -> MapboxSupport.engine(context)
             Provider.OPENFREEMAP -> MapLibreEngine(context)
+            Provider.SIX_MAPS -> MapLibreEngine(context, Provider.SIX_MAPS)
         }
     }
 }

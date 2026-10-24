@@ -46,8 +46,8 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
 
-/** [MapEngine] on MapLibre with OpenFreeMap's vector maps (free, no account, no key). */
-internal class MapLibreEngine(private val context: Context) : MapEngine {
+/** [MapEngine] on MapLibre with OpenFreeMap's vector maps (free, no account, no key), or Six Maps NSW LPI aerial imagery. */
+internal class MapLibreEngine(private val context: Context, override val provider: MapEngine.Provider = MapEngine.Provider.OPENFREEMAP) : MapEngine {
 
     companion object {
         /** OpenFreeMap: OpenStreetMap vector tiles, free, no account, no key, no cookies. */
@@ -55,11 +55,10 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
         /** A navy night map (like Waze's), lifted further in [nightTweaks]: OpenFreeMap's "dark" is near black. */
         const val DARK_STYLE = "https://tiles.openfreemap.org/styles/fiord"
         const val CREDIT = "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors"
-        /** Six Maps NSW: free NSW Government aerial/satellite imagery. */
-        const val SIXMAPS_TILES = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}"
-        const val SIXMAPS_CREDIT = "© Spatial Services NSW"
-        private const val SIXMAPS_SOURCE = "sixmaps-nsw"
-        private const val SIXMAPS_LAYER = "sixmaps-satellite"
+        const val SIX_MAPS_CREDIT = "© NSW Spatial Services · Six Maps LPI Imagery"
+        // Pure raster style — ESRI World Imagery, same source as palisade-web.
+        // ArcGIS tile scheme: {z}/{y}/{x} (row before col); MapLibre substitutes correctly.
+        private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"Powered by Esri"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
         private const val BUILDINGS = "rf-buildings-3d"
         /** A clear picture, for the puck layers that must show nothing. */
         private const val BLANK = "rf-puck-blank"
@@ -83,8 +82,7 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
         }
     }
 
-    override val provider = MapEngine.Provider.OPENFREEMAP
-    override val credit = CREDIT
+    override val credit get() = if (provider == MapEngine.Provider.SIX_MAPS) SIX_MAPS_CREDIT else CREDIT
     override val labelFont = listOf("Noto Sans Regular")
 
     init { start(context) }
@@ -137,6 +135,14 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
 
     override fun setStyle(dark: Boolean, loaded: (Boolean) -> Unit) {
         val m = map ?: return
+        lastDarkMode = dark  // Track for satellite restore
+        if (provider == MapEngine.Provider.SIX_MAPS) {
+            m.setStyle(Style.Builder().fromJson(SIX_MAPS_STYLE)) { style ->
+                addMarkerImage(style)
+                loaded(true)
+            }
+            return
+        }
         m.setStyle(Style.Builder().fromUri(if (dark) DARK_STYLE else LIGHT_STYLE)) { style ->
             if (dark) runCatching { nightTweaks(style) }
             addMarkerImage(style)
@@ -415,47 +421,29 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
 
     override fun placeBranding(topPx: Int, atEnd: Boolean) {}
 
-    // ---- Six Maps NSW satellite imagery ----
+    // ---- Six Maps / ESRI World Imagery satellite toggle ----
 
     private var satelliteOn = false
+    private var lastDarkMode = false  // Track last dark mode setting for restore
 
     override fun setSatellite(enabled: Boolean) {
         Log.d("SixMaps", "setSatellite called: enabled=$enabled")
+        val m = map ?: return
         satelliteOn = enabled
-        val style = style() ?: run {
-            Log.e("SixMaps", "style() is null, cannot toggle satellite")
-            return
-        }
-        // Hide all fill/background layers to reveal satellite underneath road labels
-        val vis = if (enabled) Property.NONE else Property.VISIBLE
-        for (layer in style.layers) {
-            when (layer) {
-                is org.maplibre.android.style.layers.BackgroundLayer -> layer.setProperties(PropertyFactory.visibility(vis))
-                is FillLayer -> {
-                    // Keep parks/grass visible on satellite for reference
-                    if (!layer.id.contains("park") && !layer.id.contains("grass"))
-                        layer.setProperties(PropertyFactory.visibility(vis))
-                }
-            }
-        }
-        Log.d("SixMaps", "Total layers in style: ${style.layers.size}")
         if (enabled) {
-            if (style.getSource(SIXMAPS_SOURCE) == null) {
-                Log.d("SixMaps", "Adding Six Maps source: $SIXMAPS_TILES")
-                val tileSet = TileSet("tileset", SIXMAPS_TILES)
-                tileSet.setMinZoom(0f)
-                tileSet.setMaxZoom(21f)
-                style.addSource(RasterSource(SIXMAPS_SOURCE, tileSet, 256))
+            // Load pure raster style - no vector layers means no opaque background blocking imagery
+            Log.d("SixMaps", "Loading raster-only satellite style")
+            m.setStyle(Style.Builder().fromJson(SIX_MAPS_STYLE)) { style ->
+                addMarkerImage(style)
             }
-            if (style.getLayer(SIXMAPS_LAYER) == null) {
-                Log.d("SixMaps", "Adding Six Maps layer at position 0")
-                val layer = RasterLayer(SIXMAPS_LAYER, SIXMAPS_SOURCE)
-                style.addLayerAt(layer, 0)
-            }
-            Log.d("SixMaps", "Satellite mode ENABLED")
         } else {
-            style.getLayer(SIXMAPS_LAYER)?.let { style.removeLayer(it) }
-            style.getSource(SIXMAPS_SOURCE)?.let { style.removeSource(it) }
+            // Restore the vector style
+            val url = if (lastDarkMode) DARK_STYLE else LIGHT_STYLE
+            Log.d("SixMaps", "Restoring vector style: $url")
+            m.setStyle(Style.Builder().fromUri(url)) { style ->
+                if (lastDarkMode) runCatching { nightTweaks(style) }
+                addMarkerImage(style)
+            }
         }
     }
 
