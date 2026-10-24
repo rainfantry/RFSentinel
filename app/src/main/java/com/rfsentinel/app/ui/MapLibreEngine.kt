@@ -59,6 +59,10 @@ internal class MapLibreEngine(private val context: Context, override val provide
         // Pure raster style — ESRI World Imagery, same source as palisade-web.
         // ArcGIS tile scheme: {z}/{y}/{x} (row before col); MapLibre substitutes correctly.
         private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"Powered by Esri"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
+        // Satellite overlay constants
+        private const val SAT_SOURCE = "esri-sat"
+        private const val SAT_LAYER = "esri-sat-layer"
+        private const val SAT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         private const val BUILDINGS = "rf-buildings-3d"
         /** A clear picture, for the puck layers that must show nothing. */
         private const val BLANK = "rf-puck-blank"
@@ -135,7 +139,6 @@ internal class MapLibreEngine(private val context: Context, override val provide
 
     override fun setStyle(dark: Boolean, loaded: (Boolean) -> Unit) {
         val m = map ?: return
-        lastDarkMode = dark  // Track for satellite restore
         if (provider == MapEngine.Provider.SIX_MAPS) {
             m.setStyle(Style.Builder().fromJson(SIX_MAPS_STYLE)) { style ->
                 addMarkerImage(style)
@@ -424,26 +427,48 @@ internal class MapLibreEngine(private val context: Context, override val provide
     // ---- Six Maps / ESRI World Imagery satellite toggle ----
 
     private var satelliteOn = false
-    private var lastDarkMode = false  // Track last dark mode setting for restore
+    private var hiddenLayers = mutableListOf<String>()  // Layers we hid for satellite mode
 
     override fun setSatellite(enabled: Boolean) {
         Log.d("SixMaps", "setSatellite called: enabled=$enabled")
-        val m = map ?: return
+        val style = style() ?: return
         satelliteOn = enabled
+
         if (enabled) {
-            // Load pure raster style - no vector layers means no opaque background blocking imagery
-            Log.d("SixMaps", "Loading raster-only satellite style")
-            m.setStyle(Style.Builder().fromJson(SIX_MAPS_STYLE)) { style ->
-                addMarkerImage(style)
+            // Add satellite tiles as bottom layer
+            if (style.getSource(SAT_SOURCE) == null) {
+                val tileSet = TileSet("tileset", SAT_TILES)
+                tileSet.setMinZoom(0f)
+                tileSet.setMaxZoom(21f)
+                style.addSource(RasterSource(SAT_SOURCE, tileSet, 256))
             }
+            if (style.getLayer(SAT_LAYER) == null) {
+                style.addLayerAt(RasterLayer(SAT_LAYER, SAT_SOURCE), 0)
+            }
+            // Hide opaque base layers (background, fills) to reveal satellite underneath
+            // Keep lines, symbols, circles visible - these include roads and app markers
+            hiddenLayers.clear()
+            for (layer in style.layers) {
+                if (layer.id == SAT_LAYER) continue
+                when (layer) {
+                    is org.maplibre.android.style.layers.BackgroundLayer,
+                    is FillLayer -> {
+                        layer.setProperties(PropertyFactory.visibility(Property.NONE))
+                        hiddenLayers.add(layer.id)
+                    }
+                }
+            }
+            Log.d("SixMaps", "Satellite ON - hid ${hiddenLayers.size} base layers")
         } else {
-            // Restore the vector style
-            val url = if (lastDarkMode) DARK_STYLE else LIGHT_STYLE
-            Log.d("SixMaps", "Restoring vector style: $url")
-            m.setStyle(Style.Builder().fromUri(url)) { style ->
-                if (lastDarkMode) runCatching { nightTweaks(style) }
-                addMarkerImage(style)
+            // Remove satellite layer/source
+            style.getLayer(SAT_LAYER)?.let { style.removeLayer(it) }
+            style.getSource(SAT_SOURCE)?.let { style.removeSource(it) }
+            // Restore hidden layers
+            for (layerId in hiddenLayers) {
+                style.getLayer(layerId)?.setProperties(PropertyFactory.visibility(Property.VISIBLE))
             }
+            Log.d("SixMaps", "Satellite OFF - restored ${hiddenLayers.size} layers")
+            hiddenLayers.clear()
         }
     }
 
