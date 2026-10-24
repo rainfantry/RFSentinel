@@ -50,9 +50,9 @@ internal class MapLibreEngine(private val context: Context, override val provide
         const val DARK_STYLE = "https://tiles.openfreemap.org/styles/fiord"
         const val CREDIT = "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors"
         const val SIX_MAPS_CREDIT = "© NSW Spatial Services · Six Maps LPI Imagery"
-        // Pure raster style for Six Maps — no vector background to block the aerial tiles.
+        // Pure raster style — ESRI World Imagery, same source as palisade-web.
         // ArcGIS tile scheme: {z}/{y}/{x} (row before col); MapLibre substitutes correctly.
-        private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"© NSW Spatial Services"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
+        private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"Powered by Esri"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
         private const val BUILDINGS = "rf-buildings-3d"
         /** A clear picture, for the puck layers that must show nothing. */
         private const val BLANK = "rf-puck-blank"
