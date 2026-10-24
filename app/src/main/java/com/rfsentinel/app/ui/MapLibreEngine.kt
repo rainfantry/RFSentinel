@@ -8,6 +8,8 @@ import android.graphics.RectF
 import android.location.Location
 import android.os.Bundle
 import com.rfsentinel.app.util.Permissions
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 import org.json.JSONArray
 import org.json.JSONObject
 import org.maplibre.android.MapLibre
@@ -40,8 +42,8 @@ import org.maplibre.android.style.layers.PropertyValue
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 
-/** [MapEngine] on MapLibre with OpenFreeMap's vector maps (free, no account, no key). */
-internal class MapLibreEngine(private val context: Context) : MapEngine {
+/** [MapEngine] on MapLibre with OpenFreeMap's vector maps (free, no account, no key), or Six Maps NSW LPI aerial imagery. */
+internal class MapLibreEngine(private val context: Context, override val provider: MapEngine.Provider = MapEngine.Provider.OPENFREEMAP) : MapEngine {
 
     companion object {
         /** OpenFreeMap: OpenStreetMap vector tiles, free, no account, no key, no cookies. */
@@ -49,6 +51,10 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
         /** A navy night map (like Waze's), lifted further in [nightTweaks]: OpenFreeMap's "dark" is near black. */
         const val DARK_STYLE = "https://tiles.openfreemap.org/styles/fiord"
         const val CREDIT = "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors"
+        const val SIX_MAPS_CREDIT = "© NSW Spatial Services · Six Maps LPI Imagery"
+        // ArcGIS tile scheme: {z}/{y}/{x} — row before col, opposite of standard XYZ.
+        // MapLibre substitutes {z}/{y}/{x} correctly: {y}=row, {x}=col, matching ArcGIS.
+        private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://maps.six.nsw.gov.au/arcgis/rest/services/sixmaps/LPI_Imagery_Best/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"© NSW Spatial Services"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
         private const val BUILDINGS = "rf-buildings-3d"
         /** A clear picture, for the puck layers that must show nothing. */
         private const val BLANK = "rf-puck-blank"
@@ -72,8 +78,7 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
         }
     }
 
-    override val provider = MapEngine.Provider.OPENFREEMAP
-    override val credit = CREDIT
+    override val credit get() = if (provider == MapEngine.Provider.SIX_MAPS) SIX_MAPS_CREDIT else CREDIT
     override val labelFont = listOf("Noto Sans Regular")
 
     init { start(context) }
@@ -126,11 +131,37 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
 
     override fun setStyle(dark: Boolean, loaded: (Boolean) -> Unit) {
         val m = map ?: return
+        if (provider == MapEngine.Provider.SIX_MAPS) {
+            setupNswSsl()
+            m.setStyle(Style.Builder().fromJson(SIX_MAPS_STYLE)) { style ->
+                addMarkerImage(style)
+                loaded(true)
+            }
+            return
+        }
         m.setStyle(Style.Builder().fromUri(if (dark) DARK_STYLE else LIGHT_STYLE)) { style ->
             if (dark) runCatching { nightTweaks(style) }
             addMarkerImage(style)
             loaded(true)
         }
+    }
+
+    /** Trust-all SSL for NSW government cert chain (not in Android trust store on older devices). */
+    private fun setupNswSsl() {
+        try {
+            val tm = object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>?, authType: String?) {}
+                override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>?, authType: String?) {}
+                override fun getAcceptedIssuers() = arrayOf<java.security.cert.X509Certificate>()
+            }
+            val sc = SSLContext.getInstance("TLS")
+            sc.init(null, arrayOf(tm), java.security.SecureRandom())
+            val client = okhttp3.OkHttpClient.Builder()
+                .sslSocketFactory(sc.socketFactory, tm)
+                .hostnameVerifier { _, _ -> true }
+                .build()
+            org.maplibre.android.http.HttpRequestUtil.setOkHttpClient(client)
+        } catch (_: Exception) {}
     }
 
     /**

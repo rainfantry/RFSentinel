@@ -825,7 +825,7 @@ class SettingsActivity : AppCompatActivity() {
         info(binding.followSwitch, "Warns when a tracker or flagged device keeps moving with you, for at least the time and distance below - whether it stays in range or keeps turning up again: heard at 3 or more places along your way within 2 hours.")
         withUnit(binding.followMinutesInput, "min")
         withUnit(binding.followMetersInput, "m")
-        info(binding.mapProviderLabel, "OpenFreeMap: free and open, OpenStreetMap data.\n\nMapbox: Mapbox's Standard map with 3D buildings and day / night light.\n\nThe floating mini map and the Android Auto map always use OpenStreetMap maps.")
+        info(binding.mapProviderLabel, "OpenFreeMap: free and open, OpenStreetMap data.\n\nMapbox: Mapbox's Standard map with 3D buildings and day / night light.\n\nSix Maps NSW LPI: high-res aerial imagery from NSW Spatial Services, Australia.\n\nThe floating mini map and the Android Auto map always use OpenStreetMap maps.")
         info(binding.mapAutoRecenterSwitch, "While you drive, the map goes back to your position a few seconds after you stop touching it.")
         info(binding.mapSpeedometerSwitch, "Your speed and the posted limit in a corner of the map; your speed turns red over the limit.")
         info(binding.mapSpeedLimitLiveSwitch, "Shows the posted limit with no destination too, by asking the route server (Valhalla, OpenStreetMap data) about the road you're on. Your position is sent to it.")
@@ -1520,14 +1520,14 @@ class SettingsActivity : AppCompatActivity() {
         show()
         btn.setOnClickListener {
             val all = com.rfsentinel.app.ui.MapEngine.Provider.entries
-            if (!com.rfsentinel.app.ui.MapEngine.mapboxAvailable) {
-                Toast.makeText(this, "Mapbox isn't available in this build", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
             val current = all.indexOf(com.rfsentinel.app.ui.MapEngine.chosen(this))
             MaterialAlertDialogBuilder(this)
                 .setTitle("Map provider")
                 .setSingleChoiceItems(all.map { it.label }.toTypedArray(), current) { d, which ->
+                    if (all[which] == com.rfsentinel.app.ui.MapEngine.Provider.MAPBOX && !com.rfsentinel.app.ui.MapEngine.mapboxAvailable) {
+                        Toast.makeText(this, "Mapbox isn't available in this build", Toast.LENGTH_SHORT).show()
+                        return@setSingleChoiceItems
+                    }
                     Prefs.setMapProvider(this, all[which].key)
                     show()
                     d.dismiss()
