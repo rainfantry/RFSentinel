@@ -550,7 +550,7 @@ class MapFragment : Fragment() {
     }
 
     private fun toggleSatellite() {
-        val engine = rf?.engine ?: return
+        val engine = rf?.map ?: return
         engine.setSatellite(!engine.satelliteEnabled)
         act.invalidateOptionsMenu()
     }
@@ -1577,7 +1577,7 @@ class MapFragment : Fragment() {
             menu.add(0, 2, 1, "Rename")
             menu.add(0, 3, 2, "Delete")
         } else {
-            menu.add(0, 15, 0, if (rf?.engine?.satelliteEnabled == true) "Hide satellite" else "Six Maps satellite").apply {
+            menu.add(0, 15, 0, if (rf?.map?.satelliteEnabled == true) "Hide satellite" else "Six Maps satellite").apply {
                 setIcon(com.rfsentinel.app.R.drawable.ic_map)
                 setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
             }
