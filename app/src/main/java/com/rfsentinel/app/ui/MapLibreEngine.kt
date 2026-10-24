@@ -27,6 +27,7 @@ import org.maplibre.android.maps.MapLibreMapOptions
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.BackgroundLayer
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillExtrusionLayer
 import org.maplibre.android.style.layers.FillLayer
@@ -420,11 +421,18 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
     override fun setSatellite(enabled: Boolean) {
         satelliteOn = enabled
         val style = style() ?: return
-        // Hide/show base map layers so satellite is visible underneath road labels
-        style.getLayer("background")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
-        style.getLayer("water")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
-        style.getLayer("landuse")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
-        style.getLayer("landcover")?.setProperties(PropertyFactory.visibility(if (enabled) Property.NONE else Property.VISIBLE))
+        // Hide all fill/background layers to reveal satellite underneath road labels
+        val vis = if (enabled) Property.NONE else Property.VISIBLE
+        for (layer in style.layers) {
+            when (layer) {
+                is org.maplibre.android.style.layers.BackgroundLayer -> layer.setProperties(PropertyFactory.visibility(vis))
+                is FillLayer -> {
+                    // Keep parks/grass visible on satellite for reference
+                    if (!layer.id.contains("park") && !layer.id.contains("grass"))
+                        layer.setProperties(PropertyFactory.visibility(vis))
+                }
+            }
+        }
         if (enabled) {
             if (style.getSource(SIXMAPS_SOURCE) == null) {
                 val tileSet = TileSet("tileset", SIXMAPS_TILES)
@@ -434,7 +442,6 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
             }
             if (style.getLayer(SIXMAPS_LAYER) == null) {
                 val layer = RasterLayer(SIXMAPS_LAYER, SIXMAPS_SOURCE)
-                // Add at bottom - background is now hidden
                 style.addLayerAt(layer, 0)
             }
         } else {
