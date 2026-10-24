@@ -38,7 +38,10 @@ import org.maplibre.android.style.layers.PaintPropertyValue
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.PropertyValue
 import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.android.style.sources.RasterSource
+import org.maplibre.android.style.sources.TileSet
 
 /** [MapEngine] on MapLibre with OpenFreeMap's vector maps (free, no account, no key). */
 internal class MapLibreEngine(private val context: Context) : MapEngine {
@@ -49,6 +52,13 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
         /** A navy night map (like Waze's), lifted further in [nightTweaks]: OpenFreeMap's "dark" is near black. */
         const val DARK_STYLE = "https://tiles.openfreemap.org/styles/fiord"
         const val CREDIT = "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors"
+
+        /** Six Maps NSW: Free NSW government aerial imagery (ArcGIS REST tiles). */
+        const val SIXMAPS_NSW_TILES = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}"
+        const val SIXMAPS_CREDIT = "© NSW Spatial Services"
+        private const val SIXMAPS_LAYER = "sixmaps-satellite"
+        private const val SIXMAPS_SOURCE = "sixmaps-nsw"
+
         private const val BUILDINGS = "rf-buildings-3d"
         /** A clear picture, for the puck layers that must show nothing. */
         private const val BLANK = "rf-puck-blank"
@@ -403,4 +413,28 @@ internal class MapLibreEngine(private val context: Context) : MapEngine {
     }
 
     override fun placeBranding(topPx: Int, atEnd: Boolean) {}
+
+    /**
+     * Toggle Six Maps NSW satellite imagery layer.
+     * Free NSW government aerial imagery via ArcGIS REST tiles.
+     */
+    fun setSatelliteLayer(enabled: Boolean) {
+        val style = style() ?: return
+        if (enabled) {
+            if (style.getSource(SIXMAPS_SOURCE) == null) {
+                val tileSet = TileSet("tileset", SIXMAPS_NSW_TILES)
+                tileSet.setMinZoom(0f)
+                tileSet.setMaxZoom(22f)
+                style.addSource(RasterSource(SIXMAPS_SOURCE, tileSet, 256))
+            }
+            if (style.getLayer(SIXMAPS_LAYER) == null) {
+                val layer = RasterLayer(SIXMAPS_LAYER, SIXMAPS_SOURCE)
+                // Add below vector layers so roads/labels stay visible
+                style.addLayerAt(layer, 0)
+            }
+        } else {
+            style.getLayer(SIXMAPS_LAYER)?.let { style.removeLayer(it) }
+            style.getSource(SIXMAPS_SOURCE)?.let { style.removeSource(it) }
+        }
+    }
 }
