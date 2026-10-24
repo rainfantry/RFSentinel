@@ -58,7 +58,7 @@ internal class MapLibreEngine(private val context: Context, override val provide
         const val SIX_MAPS_CREDIT = "© NSW Spatial Services · Six Maps LPI Imagery"
         // Pure raster style — ESRI World Imagery, same source as palisade-web.
         // ArcGIS tile scheme: {z}/{y}/{x} (row before col); MapLibre substitutes correctly.
-        private const val SIX_MAPS_STYLE = """{"version":8,"sources":{"sixmaps":{"type":"raster","tiles":["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"Powered by Esri"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
+        private const val SIX_MAPS_STYLE = """{"version":8,"glyphs":"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf","sources":{"sixmaps":{"type":"raster","tiles":["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],"tileSize":256,"attribution":"Powered by Esri"}},"layers":[{"id":"sixmaps-raster","type":"raster","source":"sixmaps"}]}"""
         // Satellite overlay constants
         private const val SAT_SOURCE = "esri-sat"
         private const val SAT_LAYER = "esri-sat-layer"
