@@ -146,61 +146,51 @@ class ThemeHeaderView @JvmOverloads constructor(
         val cuts: List<Pair<Float, Float>>, val lines: List<String>
     )
 
-    // Nods to Watch Dogs (ctOS, Blume, DedSec).
+    // ARGUS PANOPTES - the all-seeing giant of Greek mythology.
     private val dedsec = Skin(
-        0xFF0070F0.toInt(), whiteC, 0xFF0070F0.toInt(), "WE ARE DEDSEC", "rf_sentinel.exe",
+        0xFFC62828.toInt(), whiteC, 0xFFC62828.toInt(), "100 EYES OPEN", "argus_panoptes.exe",
         Typeface.create("sans-serif-condensed", Typeface.BOLD), 0.03f, 1.35f,
         listOf(0.0f to 0f, 0.42f to -4f, 0.50f to 0f, 0.74f to 3f, 0.80f to 0f),
         listOf(
-            "> ctOS 2.0 uplink... bypassed [OK]",
+            "> panoptes.init... 100 eyes awakened",
             "> sniff --ble --wifi --passive",
-            "> blume_profiler.exe: not on my watch",
-            "> the system is a lie_",
-            "> rx_only=true  tx=0  // listen, never touch",
-            "> !nvite.exe: dedsec wants you",
-            "> nudle maps: location leak blocked",
-            "> hacking is our weapon_",
-            "> wrench.exe: (^_^) let's break stuff",
-            "> ctOS profile: [REDACTED]",
-            "> the city watches you. watch back_",
-            "> better a free world_",
-            "> we are dedsec. join us_"
+            "> body_cam.detected: AXON_5G [ALERT]",
+            "> they watch you. watch them back_",
+            "> rx_only=true  tx=0  // silent observer",
+            "> redflex.sig: speed_camera [52m NW]",
+            "> alpr.scan: plate_reader [MOBILE]",
+            "> hera's watchman never sleeps_",
+            "> motorola.apx: encrypted_radio [P25]",
+            "> argus sees all. argus forgets nothing_",
+            "> axon.fleet: marked_vehicle [ALERT]",
+            "> the giant with a hundred eyes_",
+            "> we are ARGUS. we are watching_"
         )
     )
 
-    // Nods to Mr. Robot (fsociety, E Corp, the Dark Army) and lines from the show.
+    // ARGUS alternate theme - darker, more tactical
     private val fsociety = Skin(
-        0xFFC8221A.toInt(), 0xFFC8221A.toInt(), whiteC, "HELLO, FRIEND", "fsociety.dat",
+        0xFFC62828.toInt(), 0xFFC62828.toInt(), whiteC, "PANOPTES ACTIVE", "argus_tactical.dat",
         Typeface.create("sans-serif", Typeface.BOLD), 0.08f, 1.25f,
         listOf(0.0f to 0f, 0.45f to Float.NaN, 0.50f to 0f),
         listOf(
-            "$ whoami  -> root",
-            "$ echo \"hello, friend.\"",
-            "$ control is an illusion.",
-            "$ is any of it real?",
-            "$ we are fsociety. we are finally free.",
-            "$ our democracy has been hacked.",
-            "$ bonsoir, elliot.",
-            "$ people always make the best exploits.",
-            "$ give a man a bank, he can rob the world.",
-            "$ a bug is never just a mistake.",
-            "$ hello, friend? that's lame.",
-            "$ we're here to make a change.",
-            "$ dreams don't work unless you do.",
-            "$ the system is a lie.",
-            "$ e corp: our business is life itself",
-            "$ evil corp ledger... encrypted [OK]",
-            "$ ./fuxsocy.py --stage 2",
-            "$ steel mountain hvac: compromised",
-            "$ raspberry_pi: planted. listening.",
-            "$ dark army: five/nine is coming",
-            "$ allsafe ids: 0 alerts. lol.",
-            "$ ecoin wallet: frozen",
+            "$ whoami  -> argus",
+            "$ echo \"the giant awakens.\"",
+            "$ 100 eyes never close.",
+            "$ passive mode engaged.",
+            "$ nsw_police.ble: body_cam [DETECTED]",
+            "$ afp.fleet: marked_cruiser [200m]",
+            "$ redflex.fixed: speed_camera [MAPPED]",
+            "$ axon.signal: BWC_STREAMING [ALERT]",
+            "$ motorola.p25: radio_encryption [AES256]",
+            "$ cradlepoint.wifi: mobile_hotspot [COP]",
+            "$ jenoptik.alpr: plate_reader [ACTIVE]",
+            "$ toll_road.gantry: etag_scanner [NSW]",
             "$ sniff --ble --wifi --passive",
-            "$ rx_only=true  tx=0  // never touch",
-            "$ mr. robot is watching_",
-            "$ the world is a hoax. stay awake.",
-            "$ fsociety: we are legion_"
+            "$ rx_only=true  tx=0  // silent watch",
+            "$ argus never forgets_",
+            "$ the watchers are watched_",
+            "$ panoptes: all-seeing giant_"
         )
     )
 
@@ -222,9 +212,9 @@ class ThemeHeaderView @JvmOverloads constructor(
         }
         // Crop tightly to the ink so the letters fill the box.
         val b = android.graphics.Rect()
-        p.getTextBounds("RF_SENTINEL", 0, 11, b)
+        p.getTextBounds("ARGUS", 0, 5, b)
         val bmp = android.graphics.Bitmap.createBitmap(b.width() + 8, b.height() + 8, android.graphics.Bitmap.Config.ARGB_8888)
-        Canvas(bmp).drawText("RF_SENTINEL", 4f - b.left, 4f - b.top, p)
+        Canvas(bmp).drawText("ARGUS", 4f - b.left, 4f - b.top, p)
         return bmp.also { wordmark = it }
     }
 
@@ -380,7 +370,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         path.moveTo(w - m - k, h - m); path.lineTo(w - m, h - m); path.lineTo(w - m, h - m - k)
         canvas.drawPath(path, line)
 
-        val text = "RF SENTINEL"
+        val text = "ARGUS"
         fit(text, w - 40 * d, 26 * d)
         title.color = c
         title.setShadowLayer(6 * d, 0f, 0f, c)
@@ -403,7 +393,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         path.reset(); path.moveTo(w / 2, tapeY + 1 * d); path.lineTo(w / 2 - 5 * d, tapeY + 8 * d); path.lineTo(w / 2 + 5 * d, tapeY + 8 * d); path.close()
         canvas.drawPath(path, fill)
         sub.color = dim; sub.textSize = 10 * d
-        canvas.drawText("NIGHT DRIVE", 20 * d, h - 5 * d, sub)
+        canvas.drawText("PANOPTES", 20 * d, h - 5 * d, sub)
         sub.textAlign = Paint.Align.RIGHT
         canvas.drawText("RX ONLY", w - 20 * d, h - 5 * d, sub)
         sub.textAlign = Paint.Align.LEFT
@@ -417,7 +407,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         val c = primary
         // Slight flicker of the intensifier tube.
         val flicker = if (Random.nextInt(30) == 0) 0.75f else 1f
-        val text = "RF SENTINEL"
+        val text = "ARGUS"
         fit(text, w - 16 * d, 30 * d)
         title.color = c; title.alpha = (255 * flicker).toInt()
         title.setShadowLayer(10 * d, 0f, 0f, c)
@@ -425,7 +415,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         canvas.drawText(text, 6 * d, base, title)
         title.clearShadowLayer(); title.alpha = 255
         sub.color = dim
-        canvas.drawText("GEN-3 // GAIN AUTO // IR OFF", 6 * d, base + sub.textSize + 6 * d, sub)
+        canvas.drawText("PANOPTES // 100 EYES // PASSIVE", 6 * d, base + sub.textSize + 6 * d, sub)
         // Grain.
         fill.color = c
         repeat(90) {
@@ -446,7 +436,7 @@ class ThemeHeaderView @JvmOverloads constructor(
     private fun crt(canvas: Canvas, now: Long): Long {
         val w = width.toFloat(); val h = height.toFloat()
         val c = primary
-        val text = "RFSENTINEL"
+        val text = "ARGUS"
         fit(text, w - 40 * d, 30 * d)
         title.color = c
         title.setShadowLayer(5 * d, 0f, 0f, c)
@@ -460,7 +450,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         }
         title.clearShadowLayer()
         sub.color = dim
-        canvas.drawText("C:\\> SCAN /PASSIVE /ALL", 4 * d, base + sub.textSize + 6 * d, sub)
+        canvas.drawText("C:\\> PANOPTES /WATCH /ALL", 4 * d, base + sub.textSize + 6 * d, sub)
         scanlines(canvas, (c and 0x00FFFFFF) or 0x16000000)
         // A slow rolling refresh bar.
         val y = ((now - start) / 18f * d) % (h + 20 * d) - 20 * d
@@ -507,7 +497,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         for (i in -8..8) canvas.drawLine(vx + i * 12 * d, horizon, vx + i * 60 * d, h, line)
         line.alpha = 255
         // Chrome title.
-        val text = "RF SENTINEL"
+        val text = "ARGUS"
         fit(text, sx - r - 8 * d, 32 * d)
         val base = 6 * d + title.textSize
         title.shader = LinearGradient(0f, base - title.textSize, 0f, base, secondary, primary, Shader.TileMode.CLAMP)
@@ -515,7 +505,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         canvas.drawText(text, 4 * d, base, title)
         title.shader = null; title.clearShadowLayer()
         sub.color = secondary
-        canvas.drawText("PASSIVE  RF  1986", 6 * d, base + sub.textSize + 4 * d, sub)
+        canvas.drawText("PANOPTES  100  EYES", 6 * d, base + sub.textSize + 4 * d, sub)
         return 50
     }
 
@@ -525,7 +515,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         val w = width.toFloat(); val h = height.toFloat()
         val c = trace
         val reticleR = h * 0.36f
-        val text = "RF-SENTINEL"
+        val text = "ARGUS-1"
         fit(text, w - reticleR * 2 - 40 * d, 30 * d)
         title.color = c
         val base = 6 * d + title.textSize
@@ -543,7 +533,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         // Zulu clock (time only - no location anywhere).
         val zulu = SimpleDateFormat("HHmm", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date(now)) + "Z"
         sub.color = dim; sub.textSize = 11 * d
-        canvas.drawText("CALLSIGN SENTINEL-1 · RX ONLY · $zulu", 16 * d, base + sub.textSize + 8 * d, sub)
+        canvas.drawText("CALLSIGN ARGUS-1 · RX ONLY · $zulu", 16 * d, base + sub.textSize + 8 * d, sub)
         // Reticle with a slow sweep and blinking centre.
         val cx = w - reticleR - 8 * d; val cy = h / 2
         line.color = primary; line.strokeWidth = 1.5f * d
@@ -584,7 +574,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         canvas.drawText("DWG RF-001  REV C", box.left + 4 * d, box.centerY() - 4 * d, sub)
         canvas.drawText("SCALE 1:1  RX ONLY", box.left + 4 * d, box.bottom - 4 * d, sub)
         // Title and its dimension line.
-        val text = "RF SENTINEL"
+        val text = "ARGUS"
         fit(text, w - boxW - 30 * d, 28 * d)
         title.color = ink
         val tx = 10 * d; val base = 8 * d + title.textSize
@@ -620,7 +610,7 @@ class ThemeHeaderView @JvmOverloads constructor(
         // Thick-thin rule on top.
         line.strokeWidth = 2.5f * d; canvas.drawLine(0f, 2 * d, w, 2 * d, line)
         line.strokeWidth = 0.8f * d; canvas.drawLine(0f, 6 * d, w, 6 * d, line)
-        val text = "The RF Sentinel"
+        val text = "The Argus"
         fit(text, w - 12 * d, 34 * d)
         title.color = ink
         val base = 10 * d + title.textSize
